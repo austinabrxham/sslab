@@ -51,12 +51,12 @@ int main() {
         allocateContiguous(&files[i], filename, startBlock, numBlocks);
     }
 
-    printf("\nAllocated Files:\n");
-    for (int i = 0; i < num_files; i++) {
-        printf("File Name: %s\n", files[i].filename);
-        printf("Start Block: %d\n", files[i].start_block);
-        printf("Number of Blocks: %d\n\n", files[i].num_blocks);
-    }
+printf("\nFile Allocation Table:\n");
+printf("%-15s %-15s %-15s\n", "File Name", "Start Block", "Number of Blocks");
+
+for (int i = 0; i < num_files; i++) {
+    printf("%-15s %-15d %-15d\n",files[i].filename,files[i].start_block,files[i].num_blocks);
+}
 
     return 0;
 }
