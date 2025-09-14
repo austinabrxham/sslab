@@ -35,12 +35,12 @@ void initializeIndexBlock(struct IndexBlock* indexBlock) {
 
 int allocateDataBlock(struct IndexBlock* indexBlock, int blockNumber) {
     if (blockNumber < 0 || blockNumber >= MAX_BLOCKS) {
-        printf("❌ Invalid block number %d\n", blockNumber);
+        printf("Invalid block number %d\n", blockNumber);
         return 0;
     }
 
     if (freeBlocks[blockNumber] == 1) {
-        printf("❌ Block %d already allocated to another file!\n", blockNumber);
+        printf(" Block %d already allocated to another file!\n", blockNumber);
         return 0;
     }
 
@@ -108,7 +108,7 @@ int main() {
         }
     }
 
-    printf("\n📋 Summary of allocated files and their blocks:\n");
+    printf("\n Summary of allocated files and their blocks:\n");
     for (int i = 0; i < num_files; i++) {
         displayFileBlocks(&files[i]);
     }
