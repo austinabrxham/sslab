@@ -2,102 +2,109 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main()
+void displayFile(const char *filename)
 {
-    FILE *inter, *optab, *symtab, *object;
-    char label[30], opcode[15], operand[15];
-    char opt_opcode[15], opt_value[15];
-    char sym_label[30];
-    int sym_addr, locctr, start_addr = 0, program_length = 0;
+  FILE *fp = fopen(filename, "r");
+  printf("%s\n", filename);
 
-    inter = fopen("intermediate.txt", "r");
-    optab = fopen("optab.txt", "r");
-    symtab = fopen("symtab.txt", "r");
-    object = fopen("objectcode.txt", "w");
+  char line_buffer[300];
+  while (fgets(line_buffer, sizeof(line_buffer), fp) != NULL)
+  {
+    printf("%s", line_buffer);
+  }
+  printf("\n");
 
-    if (!inter || !optab || !symtab || !object)
+  fclose(fp);
+}
+
+void main()
+{
+  char label[20], opcode[20], operand[20], mnemonic[20], code[20], sym_label[20];
+  int sym_address, locctr, start = 0, length = 0;
+
+  FILE *f1 = fopen("intermediate.txt", "r");
+  FILE *f2 = fopen("optab.txt", "r");
+  FILE *f3 = fopen("symtab.txt", "r");
+  FILE *f4 = fopen("object.txt", "w");
+
+  fscanf(f1, "%x %s %s %s", &locctr, label, opcode, operand);
+
+  if (strcmp(opcode, "START") == 0)
+  {
+    start = (int)strtol(operand, NULL, 16);
+    fprintf(f4, "H^%-6s^%06X^%06X\n", label, start, 0);
+    fscanf(f1, "%x %s %s %s", &locctr, label, opcode, operand);
+  }
+
+  fprintf(f4, "T^%06X^06^", locctr);
+
+  while (strcmp(opcode, "END") != 0)
+  {
+    int found = 0;
+    rewind(f2);
+    while (fscanf(f2, "%s %s", mnemonic, code) != EOF)
     {
-        printf("Error opening files.\n");
-        return 1;
-    }
-
-    fscanf(inter, "%x %s %s %s", &locctr, label, opcode, operand);
-
-    if (strcmp(opcode, "START") == 0)
-    {
-        start_addr = (int)strtol(operand, NULL, 16);
-        fprintf(object, "H^%-6s^%06X^%06X", label, start_addr, 0);
-        fscanf(inter, "%x %s %s %s", &locctr, label, opcode, operand);
-    }
-
-    fprintf(object, "\nT^%06X^06^", locctr);
-
-    while (strcmp(opcode, "END") != 0)
-    {
-        int found = 0;
-
-        rewind(optab);
-        while (fscanf(optab, "%s %s", opt_opcode, opt_value) == 2)
+      if (strcmp(mnemonic, opcode) == 0)
+      {
+        int sym_found = 0;
+        rewind(f3);
+        while (fscanf(f3, "%s %x", sym_label, &sym_address) != EOF)
         {
-            if (strcmp(opcode, opt_opcode) == 0)
-            {
-                rewind(symtab);
-                int sym_found = 0;
-                while (fscanf(symtab, "%s %x", sym_label, &sym_addr) == 2)
-                {
-                    if (strcmp(sym_label, operand) == 0)
-                    {
-                        fprintf(object, "%s%04X^", opt_value, sym_addr);
-                        sym_found = 1;
-                        break;
-                    }
-                }
-                if (!sym_found)
-                {
-                    fprintf(object, "%s0000^", opt_value);
-                }
-                found = 1;
-                break;
-            }
+          if (strcmp(sym_label, operand) == 0)
+          {
+            fprintf(f4, "%s%04X^", code, sym_address);
+            sym_found = 1;
+            break;
+          }
         }
-
-        if (!found)
+        if (!sym_found)
         {
-            if (strcmp(opcode, "WORD") == 0)
-            {
-                fprintf(object, "%06X^", atoi(operand));
-            }
-            else if (strcmp(opcode, "BYTE") == 0)
-            {
-                if (operand[0] == 'C')
-                {
-                    for (int i = 2; i < strlen(operand) - 1; i++)
-                        fprintf(object, "%02X", operand[i]);
-                    fprintf(object, "^");
-                }
-                else if (operand[0] == 'X')
-                {
-                    fprintf(object, "%02X^", (int)strtol(&operand[2], NULL, 16));
-                }
-            }
+          fprintf(f4, "%s0000", code);
         }
-
-        fscanf(inter, "%x %s %s %s", &locctr, label, opcode, operand);
+        found = 1;
+        break;
+      }
+    }
+    if (!found)
+    {
+      if (strcmp(opcode, "WORD") == 0)
+      {
+        fprintf(f4, "%06X^", atoi(operand));
+      }
+      else if (strcmp(opcode, "BYTE") == 0)
+      {
+        if (operand[0] == 'C')
+        {
+          for (int i = 2; i < strlen(operand) - 1; i++)
+          {
+            fprintf(f4, "%02X", operand[i]);
+          }
+          fprintf(f4, "^");
+        }
+        else if (operand[0] == 'X')
+        {
+          fprintf(f4, "%02X^", (int)strtol(&operand[2], NULL, 16));
+        }
+      }
     }
 
-    program_length = locctr - start_addr;
-    fseek(object, 16, SEEK_SET);
-    fprintf(object, "%06X", program_length);
-    fseek(object, 0, SEEK_END);
+    fscanf(f1, "%x %s %s %s", &locctr, label, opcode, operand);
+  }
+  length = locctr - start;
+  fprintf(f4, "\nE^%06X", start);
 
-    fprintf(object, "\nE^%06X\n", start_addr);
+  fclose(f4);
 
-    printf("PASS 2 completed! Object code written to objectcode.txt\n");
+  f4 = fopen("object.txt", "r+");
 
-    fclose(inter);
-    fclose(optab);
-    fclose(symtab);
-    fclose(object);
+  fseek(f4, 16, SEEK_SET);
+  fprintf(f4, "%06X", length);
+  fclose(f4);
 
-    return 0;
+  printf("PASS 2 completed! Object code written to objectcode.txt\n");
+  displayFile("object.txt");
+
+  fclose(f1);
+  fclose(f2);
+  fclose(f3);
 }
