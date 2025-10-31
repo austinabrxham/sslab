@@ -1,0 +1,110 @@
+DECLARE
+    n NUMBER := &n;   -- user input
+    temp NUMBER;
+    rev NUMBER := 0;
+    digit NUMBER;
+BEGIN
+    temp := n;
+
+    WHILE temp > 0 LOOP
+        digit := MOD(temp, 10);
+        rev := rev * 10 + digit;
+        temp := FLOOR(temp / 10);
+    END LOOP;
+
+    IF n = rev THEN
+        DBMS_OUTPUT.PUT_LINE(n || ' is a Palindrome number.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE(n || ' is NOT a Palindrome number.');
+    END IF;
+END;
+/
+
+
+DECLARE
+    n NUMBER := &n;   -- user input
+    i NUMBER := 2;
+    flag NUMBER := 0;
+BEGIN
+    IF n <= 1 THEN
+        DBMS_OUTPUT.PUT_LINE(n || ' is NOT a Prime number.');
+    ELSE
+        WHILE i <= n/2 LOOP
+            IF MOD(n, i) = 0 THEN
+                flag := 1;
+                EXIT;
+            END IF;
+            i := i + 1;
+        END LOOP;
+
+        IF flag = 0 THEN
+            DBMS_OUTPUT.PUT_LINE(n || ' is a Prime number.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE(n || ' is NOT a Prime number.');
+        END IF;
+    END IF;
+END;
+/
+
+
+DECLARE
+    n NUMBER := &n;  -- user input for number of terms
+    a NUMBER := 0;
+    b NUMBER := 1;
+    c NUMBER;
+    i NUMBER := 2;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Fibonacci Series up to ' || n || ' terms:');
+    DBMS_OUTPUT.PUT_LINE(a);
+    DBMS_OUTPUT.PUT_LINE(b);
+
+    WHILE i < n LOOP
+        c := a + b;
+        DBMS_OUTPUT.PUT_LINE(c);
+        a := b;
+        b := c;
+        i := i + 1;
+    END LOOP;
+END;
+/
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    -- Step 1: Define the cursor
+    CURSOR c_salesman IS
+        SELECT salesman_id, name, city, state, commission
+        FROM salesman
+        WHERE LOWER(city) = 'bangalore' AND LOWER(state) = 'karnataka';
+
+    -- Step 2: Declare variables to hold data
+    v_id salesman.salesman_id%TYPE;
+    v_name salesman.name%TYPE;
+    v_city salesman.city%TYPE;
+    v_state salesman.state%TYPE;
+    v_comm salesman.commission%TYPE;
+
+BEGIN
+    -- Step 3: Open the cursor
+    OPEN c_salesman;
+
+    -- Step 4: Fetch and display each record
+    LOOP
+        FETCH c_salesman INTO v_id, v_name, v_city, v_state, v_comm;
+        EXIT WHEN c_salesman%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE('ID: ' || v_id);
+        DBMS_OUTPUT.PUT_LINE('Name: ' || v_name);
+        DBMS_OUTPUT.PUT_LINE('City: ' || v_city);
+        DBMS_OUTPUT.PUT_LINE('State: ' || v_state);
+        DBMS_OUTPUT.PUT_LINE('Commission: ' || v_comm);
+        DBMS_OUTPUT.PUT_LINE('--------------------------');
+    END LOOP;
+
+    -- Step 5: Close the cursor
+    CLOSE c_salesman;
+END;
+/
+
+
+
